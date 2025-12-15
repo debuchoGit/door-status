@@ -73,9 +73,11 @@
       if(!res.ok) throw new Error("HTTP " + res.status);
       const text = (await res.text()).trim();
       applyStyle(text);
-    }catch(e){
-      applyStyle("通信エラー");
-      console.error(e);
+    } catch (e) {
+      const box = document.getElementById("statusBox");
+      box.textContent = "通信エラー: " + e;
+      document.body.style.backgroundColor = "#000";
+      box.style.color = "#fff";
     }
   }
 
