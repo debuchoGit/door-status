@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Door Status</title>
-
 <style>
   body{
     margin:0;
@@ -27,10 +26,13 @@
 <div id="statusBox">読み込み中...</div>
 
 <script>
-  // ★ここを「公開で読めるStatus.txtのURL」に差し替える
-  // 例（GitHubに置いた場合）:
-  // const STATUS_URL = "https://raw.githubusercontent.com/USER/REPO/main/Status.txt";
-  const STATUS_URL = "https://raw.githubusercontent.com/debuchoGit/door-status/main/Status.txt";
+  const OWNER = "debuchoGit";
+  const REPO  = "door-status";
+  const PATH  = "Status.txt";
+  const BRANCH = "main";
+
+  // sha取得用（キャッシュ無視のためt付けてる）
+  const API_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${BRANCH}`;
 
   function applyStyle(text){
     const box = document.getElementById("statusBox");
@@ -69,10 +71,22 @@
 
   async function update(){
     try{
-      const res = await fetch(STATUS_URL + "?t=" + Date.now(), { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
+      // 1) APIから最新shaを取得
+      const apiRes = await fetch(API_URL + "&t=" + Date.now(), { cache: "no-store" });
+      if(!apiRes.ok) throw new Error("API HTTP " + apiRes.status);
+
+      const meta = await apiRes.json();
+      const sha = meta.sha;
+      if(!sha) throw new Error("shaが取得できない");
+
+      // 2) sha入りURLでStatus.txtを取得（URL自体が変わるのでキャッシュに強い）
+      const rawBySha = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${sha}/${PATH}`;
+      const res = await fetch(rawBySha, { cache: "no-store" });
+      if(!res.ok) throw new Error("RAW HTTP " + res.status);
+
       const text = (await res.text()).trim();
       applyStyle(text);
+
     } catch (e) {
       const box = document.getElementById("statusBox");
       box.textContent = "通信エラー: " + e;
@@ -82,7 +96,7 @@
   }
 
   update();
-  setInterval(update, 3000);
+  setInterval(update, 15000); // 15秒ごと（API制限回避）
 </script>
 </body>
 </html>
