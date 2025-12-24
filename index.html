@@ -27,31 +27,27 @@
 
 <script>
   const OWNER = "debuchoGit";
-  const REPO  = "door-status";
-  const PATH  = "Status.txt";
-  const BRANCH = "main";
-
-  // sha取得用（キャッシュ無視のためt付けてる）
-  const API_URL = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${BRANCH}`;
-
-  function applyStyle(text){
-    const box = document.getElementById("statusBox");
-    box.textContent = text || "（未設定）";
-
-    switch(text){
-      case "入室可":
+　const REPO  = "door-status";
+　const PATH  = "Status.txt";
+　const BRANCH = "main";
+　const CONTENTS_API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${BRANCH}`;
+　function applyStyle(text){
+　  const box = document.getElementById("statusBox");
+　　box.textContent = text || "（未設定）";
+　　switch(text){
+　　　case "入室可":
         document.body.style.backgroundColor = "#E3FCE3";
         box.style.color = "#000";
         break;
-      case "会議中":
+　　　case "会議中":
         document.body.style.backgroundColor = "#FF4B4B";
         box.style.color = "#FFF";
         break;
-      case "電話中":
+　　　case "電話中":
         document.body.style.backgroundColor = "#FFDD55";
         box.style.color = "#000";
         break;
-      case "作業中":
+　　　case "作業中":
         document.body.style.backgroundColor = "#87CEFA";
         box.style.color = "#000";
         break;
@@ -68,35 +64,36 @@
         box.style.color = "#000";
     }
   }
-
+  // base64(utf-8) を安全に文字列へ
+  function b64ToUtf8(b64){
+    const bin = atob(b64);
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return new TextDecoder("utf-8").decode(bytes);
+  }
   async function update(){
     try{
-      // 1) APIから最新shaを取得
-      const apiRes = await fetch(API_URL + "&t=" + Date.now(), { cache: "no-store" });
-      if(!apiRes.ok) throw new Error("API HTTP " + apiRes.status);
-
-      const meta = await apiRes.json();
-      const sha = meta.sha;
-      if(!sha) throw new Error("shaが取得できない");
-
-      // 2) sha入りURLでStatus.txtを取得（URL自体が変わるのでキャッシュに強い）
-      const rawBySha = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${sha}/${PATH}`;
-      const res = await fetch(rawBySha, { cache: "no-store" });
-      if(!res.ok) throw new Error("RAW HTTP " + res.status);
-
-      const text = (await res.text()).trim();
+      // 1) contents APIから blob sha を取る
+      const metaRes = await fetch(CONTENTS_API + "&t=" + Date.now(), { cache: "no-store" });
+      if(!metaRes.ok) throw new Error("META HTTP " + metaRes.status);
+      const meta = await metaRes.json();
+      const blobSha = meta.sha;
+      if(!blobSha) throw new Error("shaが取れない");
+      // 2) blob APIで中身(base64)を取る
+      const BLOB_API = `https://api.github.com/repos/${OWNER}/${REPO}/git/blobs/${blobSha}`;
+      const blobRes = await fetch(BLOB_API + "?t=" + Date.now(), { cache: "no-store" });
+      if(!blobRes.ok) throw new Error("BLOB HTTP " + blobRes.status);
+      const blob = await blobRes.json();
+      const text = b64ToUtf8(blob.content || "").trim();
       applyStyle(text);
-
     } catch (e) {
       const box = document.getElementById("statusBox");
-      box.textContent = "通信エラー: " + e;
+      box.textContent = "通信エラー:" + e;
       document.body.style.backgroundColor = "#000";
       box.style.color = "#fff";
     }
   }
-
   update();
-  setInterval(update, 15000); // 15秒ごと（API制限回避）
-</script>
+  setInterval(update, 5000); // 5秒。重ければ10～15秒でもOK
+</script> 
 </body>
 </html>
