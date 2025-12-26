@@ -33,6 +33,14 @@ async function updateStatus() {
   const data = await res.json();
   const status = data.status || "不在";
 
+    // ① 通常表示
+  const el = document.getElementById("statusBox");
+  if (el) el.textContent = status;
+
+  // ② エラー時
+  const el = document.getElementById("statusBox");
+  if (el) el.textContent = "通信エラー";
+
   // 表示テキスト
   document.getElementById("status").textContent = status;
 
