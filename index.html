@@ -26,111 +26,24 @@
 <div id="statusBox">読み込み中...</div>
 
 <script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZUE9dEbrZgvEBkgI0I208Fg9YuwRjtvJlhSUZHNZdhrYp/exec";
 
-  - const STATUS_URL = "https://raw.githubusercontent.com/debuchoGit/door-status/refs/heads/main/Status.txt";
-  + const STATUS_URL = "https://raw.githubusercontent.com/debuchoGit/door-status/main/Status.txt";
-  function applyStyle(text){
+async function refreshStatus() {
+  const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
+  const data = await res.json();
+  const status = data.status || "不在";
 
-    const box = document.getElementById("statusBox");
+  // 画面の表示（id="status" の要素に文字を入れる前提）
+  const el = document.getElementById("status");
+  if (el) el.textContent = status;
 
-    box.textContent = text || "（未設定）";
+  console.log("status:", status);
+}
 
-    switch(text){
-
-      case "入室可":
-
-        document.body.style.backgroundColor = "#E3FCE3";
-
-        box.style.color = "#000";
-
-        break;
-
-      case "会議中":
-
-        document.body.style.backgroundColor = "#FF4B4B";
-
-        box.style.color = "#FFF";
-
-        break;
-
-      case "電話中":
-
-        document.body.style.backgroundColor = "#FFDD55";
-
-        box.style.color = "#000";
-
-        break;
-
-      case "作業中":
-
-        document.body.style.backgroundColor = "#87CEFA";
-
-        box.style.color = "#000";
-
-        break;
-
-      case "外出中":
-
-        document.body.style.backgroundColor = "#A8A8A8";
-
-        box.style.color = "#000";
-
-        break;
-
-      case "不在":
-
-        document.body.style.backgroundColor = "#555555";
-
-        box.style.color = "#FFF";
-
-        break;
-
-      default:
-
-        document.body.style.backgroundColor = "#FFFFFF";
-
-        box.style.color = "#000";
-
-    }
-
-  }
-
-  async function update(){
-
-    try{
-
-      const res = await fetch(
-
-        STATUS_URL + "?t=" + Date.now(),   // キャッシュ回避
-
-        { cache: "no-store" }
-
-      );
-
-      if(!res.ok) throw new Error(res.status);
-
-      const text = (await res.text()).trim();
-
-      applyStyle(text);
-
-    } catch(e){
-
-      const box = document.getElementById("statusBox");
-
-      box.textContent = "通信エラー";
-
-      document.body.style.backgroundColor = "#000";
-
-      box.style.color = "#fff";
-
-    }
-
-  }
-
-  update();
-
-  setInterval(update, 1000); // 5秒で十分安定
+refreshStatus();
+setInterval(refreshStatus, 1000);
 </script>
+
  
 </body>
 </html>
