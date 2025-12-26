@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Door Status</title>
+
 <style>
   body{
     margin:0;
@@ -12,6 +13,8 @@
     align-items:center;
     justify-content:center;
     font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    background:#111;
+    color:#fff;
   }
   #statusBox{
     font-size:80px;
@@ -28,30 +31,51 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZUE9dEbrZgvEBkgI0I208Fg9YuwRjtvJlhSUZHNZdhrYp/exec";
 
-async function updateStatus() {
-  const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
-  const data = await res.json();
-  const status = data.status || "不在";
+function applyStyle(status){
+  let bg = "#111";
+  let fg = "#fff";
 
-    // ① 通常表示
+  switch(status){
+    case "入室可":
+      bg = "#16a34a"; break;
+    case "会議中":
+      bg = "#dc2626"; break;
+    case "電話中":
+      bg = "#f59e0b"; fg = "#111"; break;
+    case "作業中":
+      bg = "#2563eb"; break;
+    case "外出中":
+      bg = "#6b7280"; break;
+    case "不在":
+    default:
+      bg = "#111827"; break;
+  }
+
+  document.body.style.backgroundColor = bg;
+  document.body.style.color = fg;
+}
+
+async function updateStatus(){
   const el = document.getElementById("statusBox");
-  if (el) el.textContent = status;
 
-  // ② エラー時
-  const el = document.getElementById("statusBox");
-  if (el) el.textContent = "通信エラー";
+  try {
+    const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
+    const data = await res.json();
+    const status = data.status || "不在";
 
-  // 表示テキスト
-  document.getElementById("statusBox").textContent = status;
+    el.textContent = status;
+    applyStyle(status);
 
-  // ここに「既存の色分岐」をそのまま置く
-  // if (status === "会議中") { ... }
+  } catch (e) {
+    el.textContent = "通信エラー";
+    document.body.style.backgroundColor = "#111";
+    document.body.style.color = "#fff";
+  }
 }
 
 updateStatus();
 setInterval(updateStatus, 1000);
 </script>
 
- 
 </body>
 </html>
