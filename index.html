@@ -24,18 +24,32 @@
   }
 
   #statusBox {
-    font-size: min(12vw, 120px);  /* 画面サイズに応じて拡大 */
+    font-size: min(18vw, 200px);  /* 画面サイズに応じて拡大 */
     font-weight: 900;
     text-align: center;
     line-height: 1.2;
     padding: 0 5vw;
     user-select: none;           /* 誤タップ防止 */
   }
+  
+  #statusIcon {
+    font-size: min(14vw, 180px);  /* アイコンも巨大化 */
+    line-height: 1;
+    margin-bottom: 2vh;
+  }
+  
+  #statusText {
+    font-size: min(18vw, 200px);
+    font-weight: 900;
+  }
 </style>
 </head>
 
 <body>
-<div id="statusBox">読み込み中...</div>
+<div id="statusBox">
+  <div id="statusIcon">⏳</div>
+  <div id="statusText">読み込み中...</div>
+</div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZUE9dEbrZgvEBkgI0I208Fg9YuwRjtvJlhSUZHNZdhrYp/exec";
@@ -43,40 +57,43 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZ
 function applyStyle(status){
   let bg = "#111";
   let fg = "#fff";
+  let icon = "⏳";
 
   switch(status){
     case "入室可":
-      bg = "#16a34a"; break;
+      bg = "#16a34a"; icon = "✅"; break;
     case "会議中":
-      bg = "#dc2626"; break;
+      bg = "#dc2626"; icon = "🗣️"; break;
     case "電話中":
-      bg = "#f59e0b"; fg = "#111"; break;
+      bg = "#f59e0b"; fg = "#111"; icon = "📞"; break;
     case "作業中":
-      bg = "#2563eb"; break;
+      bg = "#2563eb"; icon = "💻"; break;
     case "外出中":
-      bg = "#6b7280"; break;
+      bg = "#6b7280"; icon = "🚶"; break;
     case "不在":
     default:
-      bg = "#111827"; break;
+      bg = "#111827"; icon = "❌"; break;
   }
 
   document.body.style.backgroundColor = bg;
   document.body.style.color = fg;
+  document.getElementById("statusIcon").textContent = icon;
 }
 
 async function updateStatus(){
-  const el = document.getElementById("statusBox");
+  const textEl = document.getElementById("statusText");
 
   try {
     const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
     const data = await res.json();
     const status = data.status || "不在";
 
-    el.textContent = status;
+    textEl.textContent = status;
     applyStyle(status);
 
   } catch (e) {
-    el.textContent = "通信エラー";
+    textEl.textContent = "通信エラー";
+    document.getElementById("statusIcon").textContent = "⚠️";
     document.body.style.backgroundColor = "#111";
     document.body.style.color = "#fff";
   }
