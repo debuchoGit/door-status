@@ -77,9 +77,11 @@ function applyStyle(status){
 
   document.body.style.backgroundColor = bg;
   document.body.style.color = fg;
-  document.getElementById("statusIcon").textContent = icon;
-}
 
+  const iconEl = document.getElementById("statusIcon");
+  iconEl.textContent = icon;
+  iconEl.style.opacity = "1";   // ← ★これを足す
+}
 async function updateStatus(){
   const textEl = document.getElementById("statusText");
 
