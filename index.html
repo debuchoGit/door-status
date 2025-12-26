@@ -28,20 +28,20 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZUE9dEbrZgvEBkgI0I208Fg9YuwRjtvJlhSUZHNZdhrYp/exec";
 
-async function refreshStatus() {
+async function updateStatus() {
   const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
   const data = await res.json();
   const status = data.status || "不在";
 
-  // 画面の表示（id="status" の要素に文字を入れる前提）
-  const el = document.getElementById("status");
-  if (el) el.textContent = status;
+  // 表示テキスト
+  document.getElementById("status").textContent = status;
 
-  console.log("status:", status);
+  // ここに「既存の色分岐」をそのまま置く
+  // if (status === "会議中") { ... }
 }
 
-refreshStatus();
-setInterval(refreshStatus, 1000);
+updateStatus();
+setInterval(updateStatus, 1000);
 </script>
 
  
