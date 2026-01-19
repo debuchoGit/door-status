@@ -47,7 +47,6 @@
 
 <body>
 <div id="statusBox">
-  <div id="statusIcon">⏳</div>
   <div id="statusText">読み込み中...</div>
 </div>
 
@@ -57,22 +56,21 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZ
 function applyStyle(status){
   let bg = "#111";
   let fg = "#fff";
-  let icon = "⏳";
-
+  
   switch(status){
     case "入室可":
-      bg = "#16a34a"; icon = "✅"; break;
+      bg = "#16a34a"; break;
     case "会議中":
-      bg = "#dc2626"; icon = "🗣️"; break;
+      bg = "#dc2626"; break;
     case "電話中":
-      bg = "#f59e0b"; fg = "#111"; icon = "📞"; break;
+      bg = "#f59e0b"; fg = "#111"; break;
     case "作業中":
-      bg = "#2563eb"; icon = "💻"; break;
+      bg = "#2563eb"; break;
     case "外出中":
-      bg = "#6b7280"; icon = "🚶"; break;
+      bg = "#6b7280"; break;
     case "不在":
     default:
-      bg = "#111827"; icon = "❌"; break;
+      bg = "#111827"; break;
   }
 
   document.body.style.backgroundColor = bg;
@@ -95,7 +93,6 @@ async function updateStatus(){
 
   } catch (e) {
     textEl.textContent = "通信エラー";
-    document.getElementById("statusIcon").textContent = "⚠️";
     document.body.style.backgroundColor = "#111";
     document.body.style.color = "#fff";
   }
