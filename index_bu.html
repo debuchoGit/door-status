@@ -6,83 +6,104 @@
 <title>Door Status</title>
 
 <style>
-  body{
-    margin:0;
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;          /* スクロール禁止 */
   }
-  #statusBox{
-    font-size:80px;
-    font-weight:900;
-    text-align:center;
-    padding:0 16px;
+
+  body {
+    display: flex;
+    align-items: center;       /* 縦中央 */
+    justify-content: center;   /* 横中央 */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    background: #111;
+    color: #fff;
+  }
+
+  #statusBox {
+    text-align: center;
+    line-height: 1.2;
+    padding: 0 5vw;
+    user-select: none;           /* 誤タップ防止 */
+  }
+  
+  #statusIcon {
+    font-size: min(22vw, 260px);  /* アイコンも巨大化 */
+    line-height: 1;
+    margin-bottom: 2vh;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+  }
+  
+  #statusText {
+    font-size: min(20vw, 280px);
+    font-weight: 900;
   }
 </style>
 </head>
 
 <body>
-<div id="statusBox">読み込み中...</div>
+<div id="statusBox">
+  <div id="statusIcon">⏳</div>
+  <div id="statusText">読み込み中...</div>
+</div>
 
 <script>
-  // ★ここを「公開で読めるStatus.txtのURL」に差し替える
-  // 例（GitHubに置いた場合）:
-  // const STATUS_URL = "https://raw.githubusercontent.com/USER/REPO/main/Status.txt";
-  const STATUS_URL = "https://raw.githubusercontent.com/debuchoGit/door-status/main/Status.txt";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZUE9dEbrZgvEBkgI0I208Fg9YuwRjtvJlhSUZHNZdhrYp/exec";
 
-  function applyStyle(text){
-    const box = document.getElementById("statusBox");
-    box.textContent = text || "（未設定）";
+function applyStyle(status){
+  let bg = "#111";
+  let fg = "#fff";
+  let icon = "⏳";
 
-    switch(text){
-      case "入室可":
-        document.body.style.backgroundColor = "#E3FCE3";
-        box.style.color = "#000";
-        break;
-      case "会議中":
-        document.body.style.backgroundColor = "#FF4B4B";
-        box.style.color = "#FFF";
-        break;
-      case "電話中":
-        document.body.style.backgroundColor = "#FFDD55";
-        box.style.color = "#000";
-        break;
-      case "作業中":
-        document.body.style.backgroundColor = "#87CEFA";
-        box.style.color = "#000";
-        break;
-      case "外出中":
-        document.body.style.backgroundColor = "#A8A8A8";
-        box.style.color = "#000";
-        break;
-      case "不在":
-        document.body.style.backgroundColor = "#555555";
-        box.style.color = "#FFF";
-        break;
-      default:
-        document.body.style.backgroundColor = "#FFFFFF";
-        box.style.color = "#000";
-    }
+  switch(status){
+    case "入室可":
+      bg = "#16a34a"; icon = "✅"; break;
+    case "会議中":
+      bg = "#dc2626"; icon = "🗣️"; break;
+    case "電話中":
+      bg = "#f59e0b"; fg = "#111"; icon = "📞"; break;
+    case "作業中":
+      bg = "#2563eb"; icon = "💻"; break;
+    case "外出中":
+      bg = "#6b7280"; icon = "🚶"; break;
+    case "不在":
+    default:
+      bg = "#111827"; icon = "❌"; break;
   }
 
-  async function update(){
-    try{
-      const res = await fetch(STATUS_URL + "?t=" + Date.now(), { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      const text = (await res.text()).trim();
-      applyStyle(text);
-    } catch (e) {
-      const box = document.getElementById("statusBox");
-      box.textContent = "通信エラー: " + e;
-      document.body.style.backgroundColor = "#000";
-      box.style.color = "#fff";
-    }
-  }
+  document.body.style.backgroundColor = bg;
+  document.body.style.color = fg;
 
-  update();
-  setInterval(update, 3000);
+  const iconEl = document.getElementById("statusIcon");
+  iconEl.textContent = icon;
+  iconEl.style.opacity = "1";   // ← ★これを足す
+}
+async function updateStatus(){
+  const textEl = document.getElementById("statusText");
+
+  try {
+    const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
+    const data = await res.json();
+    const status = data.status || "不在";
+
+    textEl.textContent = status;
+    applyStyle(status);
+
+  } catch (e) {
+    textEl.textContent = "通信エラー";
+    document.getElementById("statusIcon").textContent = "⚠️";
+    document.body.style.backgroundColor = "#111";
+    document.body.style.color = "#fff";
+  }
+}
+
+updateStatus();
+setInterval(updateStatus, 1000);
 </script>
+
 </body>
 </html>
