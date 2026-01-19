@@ -29,7 +29,15 @@
     padding: 0 5vw;
     user-select: none;           /* 誤タップ防止 */
   }
-      
+  
+  #statusIcon {
+    font-size: min(22vw, 260px);  /* アイコンも巨大化 */
+    line-height: 1;
+    margin-bottom: 2vh;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+  }
+  
   #statusText {
     font-size: min(20vw, 280px);
     font-weight: 900;
@@ -39,6 +47,7 @@
 
 <body>
 <div id="statusBox">
+  <div id="statusIcon">⏳</div>
   <div id="statusText">読み込み中...</div>
 </div>
 
@@ -48,21 +57,22 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbz5CuAusXVHocxtRDUZV5nZ
 function applyStyle(status){
   let bg = "#111";
   let fg = "#fff";
-  
+  let icon = "⏳";
+
   switch(status){
     case "入室可":
-      bg = "#16a34a"; break;
+      bg = "#16a34a"; icon = "✅"; break;
     case "会議中":
-      bg = "#dc2626"; break;
+      bg = "#dc2626"; icon = "🗣️"; break;
     case "電話中":
-      bg = "#f59e0b"; fg = "#111"; break;
+      bg = "#f59e0b"; fg = "#111"; icon = "📞"; break;
     case "作業中":
-      bg = "#2563eb"; break;
+      bg = "#2563eb"; icon = "💻"; break;
     case "外出中":
-      bg = "#6b7280"; break;
+      bg = "#6b7280"; icon = "🚶"; break;
     case "不在":
     default:
-      bg = "#111827"; break;
+      bg = "#111827"; icon = "❌"; break;
   }
 
   document.body.style.backgroundColor = bg;
@@ -85,6 +95,7 @@ async function updateStatus(){
 
   } catch (e) {
     textEl.textContent = "通信エラー";
+    document.getElementById("statusIcon").textContent = "⚠️";
     document.body.style.backgroundColor = "#111";
     document.body.style.color = "#fff";
   }
