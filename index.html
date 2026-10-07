@@ -11,13 +11,13 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;          /* スクロール禁止 */
+    overflow: hidden;
   }
 
   body {
     display: flex;
-    align-items: center;       /* 縦中央 */
-    justify-content: center;   /* 横中央 */
+    align-items: center;
+    justify-content: center;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     background: #111;
     color: #fff;
@@ -27,9 +27,9 @@
     text-align: center;
     line-height: 1.2;
     padding: 0 5vw;
-    user-select: none;           /* 誤タップ防止 */
+    user-select: none;
   }
-      
+
   #statusText {
     font-size: min(20vw, 280px);
     font-weight: 900;
@@ -44,18 +44,27 @@
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyDFZTW5ofKjs934I85R1wAkOEVvQCsjgZX5HrluwT5TUGikSkhcx3GWLr97jOaRCPa/exec";
-  
-function applyStyle(status){
+
+const UPDATE_INTERVAL = 3000;
+const RETRY_LIMIT = 5;
+const REQUEST_TIMEOUT = 10000;
+
+let lastStatus = null;
+let errorCount = 0;
+
+function applyStyle(status) {
   let bg = "#111";
   let fg = "#fff";
-  
-  switch(status){
+
+  switch (status) {
     case "入室可":
       bg = "#16a34a"; break;
     case "会議中":
       bg = "#dc2626"; break;
     case "電話中":
-      bg = "#f59e0b"; fg = "#111"; break;
+      bg = "#f59e0b";
+      fg = "#111";
+      break;
     case "作業中":
       bg = "#2563eb"; break;
     case "外出中":
@@ -68,27 +77,63 @@ function applyStyle(status){
   document.body.style.backgroundColor = bg;
   document.body.style.color = fg;
 }
-async function updateStatus(){
-  const textEl = document.getElementById("statusText");
+
+function showStatus(status) {
+  if (status === lastStatus) return;
+
+  document.getElementById("statusText").textContent = status;
+  applyStyle(status);
+  lastStatus = status;
+}
+
+async function updateStatus() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, REQUEST_TIMEOUT);
 
   try {
-    const res = await fetch(GAS_URL + "?t=" + Date.now(), { cache: "no-store" });
-    const data = await res.json();
-    const status = data.status || "不在";
+    const res = await fetch(
+      GAS_URL + "?t=" + Date.now(),
+      {
+        cache: "no-store",
+        signal: controller.signal
+      }
+    );
 
-    textEl.textContent = status;
-    applyStyle(status);
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
+    const data = await res.json();
+
+    if (
+      data.ok !== true ||
+      typeof data.status !== "string"
+    ) {
+      throw new Error("Invalid response");
+    }
+
+    errorCount = 0;
+    showStatus(data.status);
 
   } catch (e) {
-    textEl.textContent = "通信エラー";
-    document.body.style.backgroundColor = "#111";
-    document.body.style.color = "#fff";
+    errorCount++;
+    console.warn("通信失敗:", e);
+
+    if (lastStatus === null && errorCount >= RETRY_LIMIT) {
+      document.getElementById("statusText").textContent = "通信エラー";
+      document.body.style.backgroundColor = "#111";
+      document.body.style.color = "#fff";
+    }
+
+  } finally {
+    clearTimeout(timeout);
+    setTimeout(updateStatus, UPDATE_INTERVAL);
   }
 }
 
 updateStatus();
-setInterval(updateStatus, 1000);
 </script>
-
 </body>
 </html>
